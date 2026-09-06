@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package patient;
+
+option java_multiple_files = true;
+option java_package = "dev.sismed.patient";
+
+message PatientProto {
+  int64 id = 1;
+  string nome = 2;
+  string cpf = 3;
+  string email = 4;
+  string telefone = 5;
+  string data_nascimento = 6;
+  bool ativo = 7;
+}
+
+message AddPatientRequest {
+  PatientProto patient = 1;
+}
+
+message AddPatientResponse {
+  int64 patient_id = 1;
+  string message = 2;
+}
+
+message ListPatientsRequest {}
+
+message ListPatientsResponse {
+  repeated PatientProto patients = 1;
+}
+
+message GetPatientByIdRequest {
+  int64 id = 1;
+}
+
+message GetPatientByIdResponse {
+  PatientProto patient = 1;
+}
+
+message GetPatientHistoryRequest {
+  int64 paciente_id = 1;
+}
+
+message ConsultaResumoProto {
+  int64 id = 1;
+  int64 medico_id = 2;
+  string data_hora = 3;
+  string especialidade = 4;
+  string status = 5;
+}
+
+message GetPatientHistoryResponse {
+  repeated ConsultaResumoProto consultas = 1;
+}
+
+service PatientService {
+  rpc AddPatient(AddPatientRequest) returns (AddPatientResponse);
+  rpc ListPatients(ListPatientsRequest) returns (ListPatientsResponse);
+  rpc GetPatientById(GetPatientByIdRequest) returns (GetPatientByIdResponse);
+  rpc GetPatientHistory(GetPatientHistoryRequest) returns (GetPatientHistoryResponse);
+}

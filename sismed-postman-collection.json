@@ -1,0 +1,416 @@
+{
+  "info": {
+    "name": "SisMed API",
+    "description": "Collection completa do SisMed — autenticação JWT + queries e mutations GraphQL.\n\nFluxo de uso:\n1. Execute o request de Login em Autenticacao\n2. O token é salvo automaticamente na variável {{token}}\n3. Todos os demais requests já usam o token automaticamente",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Autenticacao",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const res = pm.response.json();",
+                  "if (res.token) {",
+                  "    pm.collectionVariables.set('token', res.token);",
+                  "    console.log('Token salvo: ' + res.token.substring(0, 30) + '...');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"login\": \"dr.carlos\",\n  \"senha\": \"medico123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["auth", "login"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pacientes",
+      "item": [
+        {
+          "name": "Listar Pacientes",
+          "description": "Roles permitidas: MEDICO, ENFERMEIRO",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  listarPacientes {\n    id\n    nome\n    cpf\n    email\n    telefone\n    dataNascimento\n    ativo\n  }\n}",
+                "variables": ""
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Buscar Paciente por ID",
+          "description": "Roles: MEDICO, ENFERMEIRO → qualquer ID. PACIENTE → retorna sempre o próprio perfil.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query BuscarPaciente($id: ID!) {\n  buscarPacientePorId(id: $id) {\n    id\n    nome\n    cpf\n    email\n    telefone\n    dataNascimento\n    ativo\n  }\n}",
+                "variables": "{\n  \"id\": \"1\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Adicionar Paciente",
+          "description": "Role permitida: apenas MEDICO",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation AdicionarPaciente($entrada: EntradaPaciente!) {\n  adicionarPaciente(entrada: $entrada) {\n    pacienteId\n    mensagem\n  }\n}",
+                "variables": "{\n  \"entrada\": {\n    \"nome\": \"Carlos Ferreira\",\n    \"cpf\": \"11122233300\",\n    \"email\": \"carlos.ferreira@email.com\",\n    \"telefone\": \"11988887777\",\n    \"dataNascimento\": \"1978-05-20\"\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consultas",
+      "item": [
+        {
+          "name": "Buscar Consulta por ID",
+          "description": "Roles permitidas: MEDICO, ENFERMEIRO",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query BuscarConsulta($id: ID!) {\n  buscarConsultaPorId(id: $id) {\n    id\n    pacienteId\n    medicoId\n    dataHora\n    especialidade\n    observacoes\n    status\n    criadoPor\n  }\n}",
+                "variables": "{\n  \"id\": \"1\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Consultas por Paciente — Todas",
+          "description": "Roles: MEDICO, ENFERMEIRO → qualquer pacienteId. PACIENTE → sempre retorna as próprias consultas. apenasFuturas=false traz todas, ordenadas por data desc.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query ConsultasPorPaciente($pacienteId: ID!, $apenasFuturas: Boolean) {\n  consultasPorPaciente(pacienteId: $pacienteId, apenasFuturas: $apenasFuturas) {\n    id\n    pacienteId\n    medicoId\n    dataHora\n    especialidade\n    observacoes\n    status\n    criadoPor\n  }\n}",
+                "variables": "{\n  \"pacienteId\": \"1\",\n  \"apenasFuturas\": false\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Consultas por Paciente — Apenas Futuras",
+          "description": "apenasFuturas=true traz somente consultas com dataHora > agora, ordenadas por data asc.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query ConsultasFuturas($pacienteId: ID!, $apenasFuturas: Boolean) {\n  consultasPorPaciente(pacienteId: $pacienteId, apenasFuturas: $apenasFuturas) {\n    id\n    pacienteId\n    medicoId\n    dataHora\n    especialidade\n    status\n  }\n}",
+                "variables": "{\n  \"pacienteId\": \"1\",\n  \"apenasFuturas\": true\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Agendar Consulta",
+          "description": "Role permitida: apenas MEDICO. criadoPor é preenchido automaticamente com o login do médico autenticado.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation AgendarConsulta($entrada: EntradaAgendarConsulta!) {\n  agendarConsulta(entrada: $entrada) {\n    id\n    mensagem\n  }\n}",
+                "variables": "{\n  \"entrada\": {\n    \"pacienteId\": \"1\",\n    \"medicoId\": \"10\",\n    \"dataHora\": \"2026-10-15T09:00:00\",\n    \"especialidade\": \"Dermatologia\",\n    \"observacoes\": \"Primeira consulta dermatológica\"\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Atualizar Consulta",
+          "description": "Role permitida: apenas MEDICO. Atualiza dataHora, especialidade e/ou observacoes.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation AtualizarConsulta($id: ID!, $entrada: EntradaAtualizarConsulta!) {\n  atualizarConsulta(id: $id, entrada: $entrada) {\n    mensagem\n  }\n}",
+                "variables": "{\n  \"id\": \"1\",\n  \"entrada\": {\n    \"dataHora\": \"2026-10-20T14:00:00\",\n    \"especialidade\": \"Cardiologia\",\n    \"observacoes\": \"Reagendada a pedido do paciente\"\n  }\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Confirmar Consulta",
+          "description": "Roles permitidas: MEDICO, ENFERMEIRO. Transição de status: AGENDADA → CONFIRMADA.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation ConfirmarConsulta($id: ID!) {\n  confirmarConsulta(id: $id) {\n    mensagem\n  }\n}",
+                "variables": "{\n  \"id\": \"1\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Realizar Consulta",
+          "description": "Role permitida: apenas MEDICO. Transição de status: CONFIRMADA → REALIZADA.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation RealizarConsulta($id: ID!) {\n  realizarConsulta(id: $id) {\n    mensagem\n  }\n}",
+                "variables": "{\n  \"id\": \"1\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Cancelar Consulta",
+          "description": "Roles permitidas: MEDICO, ENFERMEIRO. Pode cancelar consultas AGENDADAS ou CONFIRMADAS.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation CancelarConsulta($id: ID!) {\n  cancelarConsulta(id: $id) {\n    mensagem\n  }\n}",
+                "variables": "{\n  \"id\": \"3\"\n}"
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Testes de Acesso Negado",
+      "item": [
+        {
+          "name": "Enfermeiro tenta Agendar (deve dar 403)",
+          "description": "Login como enf.ana antes de executar. Deve retornar erro de autorização pois ENFERMEIRO não pode agendar.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "mutation {\n  agendarConsulta(entrada: {\n    pacienteId: \"1\"\n    medicoId: \"10\"\n    dataHora: \"2026-11-01T10:00:00\"\n    especialidade: \"Clínica Geral\"\n    observacoes: \"\"\n  }) {\n    id\n    mensagem\n  }\n}",
+                "variables": ""
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Paciente tenta Listar Pacientes (deve dar 403)",
+          "description": "Login como pac.joao antes de executar. Deve retornar erro de autorização pois PACIENTE não pode listar todos.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  listarPacientes {\n    id\n    nome\n  }\n}",
+                "variables": ""
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Paciente tenta ver consultas de outro (deve retornar as próprias)",
+          "description": "Login como pac.joao antes de executar. Mesmo passando pacienteId=2 (Maria), retorna as consultas do João (id=1) por segurança.",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  consultasPorPaciente(pacienteId: \"2\", apenasFuturas: false) {\n    id\n    pacienteId\n    especialidade\n    status\n  }\n}",
+                "variables": ""
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        },
+        {
+          "name": "Sem token (deve dar 401)",
+          "description": "Sem Authorization header. Deve retornar 401 Unauthorized.",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "graphql",
+              "graphql": {
+                "query": "query {\n  listarPacientes {\n    id\n    nome\n  }\n}",
+                "variables": ""
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/graphql",
+              "host": ["{{baseUrl}}"],
+              "path": ["graphql"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package patient;
+
+option java_multiple_files = true;
+option java_package = "dev.sismed.patient";
+
+message PacienteProto {
+  int64 id = 1;
+  string nome = 2;
+  string cpf = 3;
+  string email = 4;
+  string telefone = 5;
+  string data_nascimento = 6;
+  bool ativo = 7;
+}
+
+message AdicionarPacienteRequisicao {
+  PacienteProto paciente = 1;
+}
+
+message AdicionarPacienteResposta {
+  int64 paciente_id = 1;
+  string mensagem = 2;
+}
+
+message ListarPacientesRequisicao {}
+
+message ListarPacientesResposta {
+  repeated PacienteProto pacientes = 1;
+}
+
+message BuscarPacientePorIdRequisicao {
+  int64 id = 1;
+}
+
+message BuscarPacientePorIdResposta {
+  PacienteProto paciente = 1;
+}
+
+message BuscarHistoricoPacienteRequisicao {
+  int64 paciente_id = 1;
+}
+
+message ConsultaResumoProto {
+  int64 id = 1;
+  int64 medico_id = 2;
+  string data_hora = 3;
+  string especialidade = 4;
+  string status = 5;
+}
+
+message BuscarHistoricoPacienteResposta {
+  repeated ConsultaResumoProto consultas = 1;
+}
+
+service ServicoPaciente {
+  rpc AdicionarPaciente(AdicionarPacienteRequisicao) returns (AdicionarPacienteResposta);
+  rpc ListarPacientes(ListarPacientesRequisicao) returns (ListarPacientesResposta);
+  rpc BuscarPacientePorId(BuscarPacientePorIdRequisicao) returns (BuscarPacientePorIdResposta);
+  rpc BuscarHistoricoPaciente(BuscarHistoricoPacienteRequisicao) returns (BuscarHistoricoPacienteResposta);
+}

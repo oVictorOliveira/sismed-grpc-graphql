@@ -1,0 +1,80 @@
+type Query {
+    listarPacientes: [Paciente!]!
+    buscarPacientePorId(id: ID!): Paciente
+    buscarConsultaPorId(id: ID!): Consulta
+    consultasPorPaciente(pacienteId: ID!, apenasFuturas: Boolean): [Consulta!]!
+}
+
+type Mutation {
+    adicionarPaciente(entrada: EntradaPaciente!): RespostaAdicionarPaciente!
+    agendarConsulta(entrada: EntradaAgendarConsulta!): RespostaAgendarConsulta!
+    atualizarConsulta(id: ID!, entrada: EntradaAtualizarConsulta!): RespostaMutacao!
+    confirmarConsulta(id: ID!): RespostaMutacao!
+    realizarConsulta(id: ID!): RespostaMutacao!
+    cancelarConsulta(id: ID!): RespostaMutacao!
+}
+
+enum StatusConsulta {
+    UNKNOWN
+    AGENDADA
+    CONFIRMADA
+    REALIZADA
+    CANCELADA
+}
+
+type Paciente {
+    id: ID!
+    nome: String!
+    cpf: String!
+    email: String!
+    telefone: String
+    dataNascimento: String
+    ativo: Boolean!
+}
+
+type Consulta {
+    id: ID!
+    pacienteId: ID!
+    medicoId: ID!
+    dataHora: String!
+    especialidade: String
+    observacoes: String
+    status: StatusConsulta!
+    criadoPor: String
+}
+
+type RespostaAdicionarPaciente {
+    pacienteId: ID!
+    mensagem: String!
+}
+
+type RespostaAgendarConsulta {
+    id: ID!
+    mensagem: String!
+}
+
+type RespostaMutacao {
+    mensagem: String!
+}
+
+input EntradaPaciente {
+    nome: String!
+    cpf: String!
+    email: String!
+    telefone: String
+    dataNascimento: String
+}
+
+input EntradaAgendarConsulta {
+    pacienteId: ID!
+    medicoId: ID!
+    dataHora: String!
+    especialidade: String
+    observacoes: String
+}
+
+input EntradaAtualizarConsulta {
+    dataHora: String
+    especialidade: String
+    observacoes: String
+}

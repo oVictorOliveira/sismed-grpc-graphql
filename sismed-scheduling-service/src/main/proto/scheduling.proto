@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package scheduling;
+
+option java_multiple_files = true;
+option java_package = "dev.sismed.scheduling";
+
+enum ConsultaStatusProto {
+  UNKNOWN = 0;
+  AGENDADA = 1;
+  CONFIRMADA = 2;
+  REALIZADA = 3;
+  CANCELADA = 4;
+}
+
+message ConsultaProto {
+  int64 id = 1;
+  int64 paciente_id = 2;
+  int64 medico_id = 3;
+  string data_hora = 4;
+  string especialidade = 5;
+  string observacoes = 6;
+  ConsultaStatusProto status = 7;
+  string criado_por = 8;
+}
+
+message AgendarConsultaRequisicao {
+  int64 paciente_id = 1;
+  int64 medico_id = 2;
+  string data_hora = 3;
+  string especialidade = 4;
+  string observacoes = 5;
+  string criado_por = 6;
+}
+
+message AgendarConsultaResposta {
+  int64 id = 1;
+  string mensagem = 2;
+}
+
+message BuscarConsultaRequisicao {
+  int64 id = 1;
+}
+
+message BuscarConsultaResposta {
+  ConsultaProto consulta = 1;
+}
+
+message AtualizarConsultaRequisicao {
+  int64 id = 1;
+  string data_hora = 2;
+  string especialidade = 3;
+  string observacoes = 4;
+}
+
+message AtualizarConsultaResposta {
+  string mensagem = 1;
+}
+
+message CancelarConsultaRequisicao {
+  int64 id = 1;
+}
+
+message CancelarConsultaResposta {
+  string mensagem = 1;
+}
+
+message ConfirmarConsultaRequisicao {
+  int64 id = 1;
+}
+
+message ConfirmarConsultaResposta {
+  string mensagem = 1;
+}
+
+message RealizarConsultaRequisicao {
+  int64 id = 1;
+}
+
+message RealizarConsultaResposta {
+  string mensagem = 1;
+}
+
+message ListarConsultasPorPacienteRequisicao {
+  int64 paciente_id = 1;
+  bool apenas_futuras = 2;
+}
+
+message ListarConsultasPorPacienteResposta {
+  repeated ConsultaProto consultas = 1;
+}
+
+message ListarProximasConsultasRequisicao {
+  int32 dentro_de_horas = 1;
+}
+
+message ListarProximasConsultasResposta {
+  repeated ConsultaProto consultas = 1;
+}
+
+service ServicoAgendamento {
+  rpc AgendarConsulta(AgendarConsultaRequisicao) returns (AgendarConsultaResposta);
+  rpc BuscarConsulta(BuscarConsultaRequisicao) returns (BuscarConsultaResposta);
+  rpc AtualizarConsulta(AtualizarConsultaRequisicao) returns (AtualizarConsultaResposta);
+  rpc CancelarConsulta(CancelarConsultaRequisicao) returns (CancelarConsultaResposta);
+  rpc ConfirmarConsulta(ConfirmarConsultaRequisicao) returns (ConfirmarConsultaResposta);
+  rpc RealizarConsulta(RealizarConsultaRequisicao) returns (RealizarConsultaResposta);
+  rpc ListarConsultasPorPaciente(ListarConsultasPorPacienteRequisicao) returns (ListarConsultasPorPacienteResposta);
+  rpc ListarProximasConsultas(ListarProximasConsultasRequisicao) returns (ListarProximasConsultasResposta);
+}
