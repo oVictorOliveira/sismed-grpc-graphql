@@ -9,13 +9,13 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -29,17 +29,17 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain cadeiaFiltros(HttpSecurity http) throws Exception {
+    public SecurityFilterChain cadeiaFiltros(HttpSecurity http) {
         return http
-                .csrf(csrf -> csrf.disable())
+                .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sessao -> sessao.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(new AntPathRequestMatcher("/auth/**")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/graphiql")).permitAll()
-                        .requestMatchers(new AntPathRequestMatcher("/graphiql/**")).permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/graphiql").permitAll()
+                        .requestMatchers("/graphiql/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
@@ -47,7 +47,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager gerenciadorAutenticacao(AuthenticationConfiguration config) throws Exception {
+    public AuthenticationManager gerenciadorAutenticacao(AuthenticationConfiguration config) {
         return config.getAuthenticationManager();
     }
 

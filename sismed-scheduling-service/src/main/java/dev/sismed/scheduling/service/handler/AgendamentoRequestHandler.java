@@ -1,11 +1,13 @@
 package dev.sismed.scheduling.service.handler;
 
 import dev.sismed.scheduling.*;
+import dev.sismed.scheduling.dto.SchedulingDTO;
 import dev.sismed.scheduling.entity.Consulta;
 import dev.sismed.scheduling.entity.ConsultaStatus;
 import dev.sismed.scheduling.exception.ConsultaNotFoundException;
 import dev.sismed.scheduling.exception.ConsultaStatusException;
 import dev.sismed.scheduling.repository.ConsultaRepository;
+import dev.sismed.scheduling.service.NotificationProducerService;
 import dev.sismed.scheduling.util.AgendamentoMessageMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,11 +17,12 @@ import java.util.List;
 
 @Service
 public class AgendamentoRequestHandler {
-
     private final ConsultaRepository repositorioConsulta;
+    private final NotificationProducerService notificationProducerService;
 
-    public AgendamentoRequestHandler(ConsultaRepository repositorioConsulta) {
+    public AgendamentoRequestHandler(ConsultaRepository repositorioConsulta, NotificationProducerService notificationProducerService) {
         this.repositorioConsulta = repositorioConsulta;
+        this.notificationProducerService = notificationProducerService;
     }
 
     @Transactional
@@ -30,9 +33,16 @@ public class AgendamentoRequestHandler {
             throw new IllegalArgumentException("A dataHora da consulta deve ser futura.");
         }
         Consulta consulta = AgendamentoMessageMapper.paraEntidade(requisicao);
-        repositorioConsulta.save(consulta);
+
+        Consulta consultaAgendada = repositorioConsulta.save(consulta);
+        SchedulingDTO consultaDTO = new SchedulingDTO(consultaAgendada.getId(), consultaAgendada.getPacienteId(),
+                consultaAgendada.getMedicoId(), consultaAgendada.getDataHora().toString(), consultaAgendada.getEspecialidade(),
+                consultaAgendada.getObservacoes(), consultaAgendada.getStatus().toString());
+
+        notificationProducerService.sendSchedulingNotification(consultaDTO);
+
         return AgendarConsultaResposta.newBuilder()
-                .setId(consulta.getId())
+                .setId(consultaAgendada.getId())
                 .setMensagem("Consulta agendada com sucesso")
                 .build();
     }
@@ -59,7 +69,13 @@ public class AgendamentoRequestHandler {
         if (!requisicao.getEspecialidade().isBlank()) consulta.setEspecialidade(requisicao.getEspecialidade());
         if (!requisicao.getObservacoes().isBlank()) consulta.setObservacoes(requisicao.getObservacoes());
 
-        repositorioConsulta.save(consulta);
+        Consulta consultaAlterada = repositorioConsulta.save(consulta);
+        SchedulingDTO consultaDTO = new SchedulingDTO(consultaAlterada.getId(), consultaAlterada.getPacienteId(),
+                consultaAlterada.getMedicoId(), consultaAlterada.getDataHora().toString(), consultaAlterada.getEspecialidade(),
+                consultaAlterada.getObservacoes(), consultaAlterada.getStatus().toString());
+
+        notificationProducerService.sendSchedulingNotification(consultaDTO);
+
         return AtualizarConsultaResposta.newBuilder().setMensagem("Consulta atualizada com sucesso").build();
     }
 
@@ -68,7 +84,14 @@ public class AgendamentoRequestHandler {
         Consulta consulta = encontrarOuLancar(requisicao.getId());
         verificarEditavel(consulta);
         consulta.setStatus(ConsultaStatus.CANCELADA);
-        repositorioConsulta.save(consulta);
+
+        Consulta consultaCancelada = repositorioConsulta.save(consulta);
+        SchedulingDTO consultaDTO = new SchedulingDTO(consultaCancelada.getId(), consultaCancelada.getPacienteId(),
+                consultaCancelada.getMedicoId(), consultaCancelada.getDataHora().toString(), consultaCancelada.getEspecialidade(),
+                consultaCancelada.getObservacoes(), consultaCancelada.getStatus().toString());
+
+        notificationProducerService.sendSchedulingNotification(consultaDTO);
+
         return CancelarConsultaResposta.newBuilder().setMensagem("Consulta cancelada").build();
     }
 
@@ -80,7 +103,14 @@ public class AgendamentoRequestHandler {
                     + consulta.getStatus());
         }
         consulta.setStatus(ConsultaStatus.CONFIRMADA);
-        repositorioConsulta.save(consulta);
+
+        Consulta consultaConfirmada = repositorioConsulta.save(consulta);
+        SchedulingDTO consultaDTO = new SchedulingDTO(consultaConfirmada.getId(), consultaConfirmada.getPacienteId(),
+                consultaConfirmada.getMedicoId(), consultaConfirmada.getDataHora().toString(), consultaConfirmada.getEspecialidade(),
+                consultaConfirmada.getObservacoes(), consultaConfirmada.getStatus().toString());
+
+        notificationProducerService.sendSchedulingNotification(consultaDTO);
+
         return ConfirmarConsultaResposta.newBuilder().setMensagem("Consulta confirmada").build();
     }
 
@@ -92,7 +122,14 @@ public class AgendamentoRequestHandler {
                     + consulta.getStatus());
         }
         consulta.setStatus(ConsultaStatus.REALIZADA);
-        repositorioConsulta.save(consulta);
+
+        Consulta consultaRealizada = repositorioConsulta.save(consulta);
+        SchedulingDTO consultaDTO = new SchedulingDTO(consultaRealizada.getId(), consultaRealizada.getPacienteId(),
+                consultaRealizada.getMedicoId(), consultaRealizada.getDataHora().toString(), consultaRealizada.getEspecialidade(),
+                consultaRealizada.getObservacoes(), consultaRealizada.getStatus().toString());
+
+        notificationProducerService.sendSchedulingNotification(consultaDTO);
+
         return RealizarConsultaResposta.newBuilder().setMensagem("Consulta realizada").build();
     }
 
